@@ -59,7 +59,7 @@ class PipelineSettings:
             limit=int(_env("LIMIT", "40")),
             bronze_path=Path(_env("BRONZE_PATH", "data/bronze/magalu_smartphones.jsonl")),
             queue_path=Path(_env("QUEUE_PATH", "data/queue/product_listing_events.jsonl")),
-            db_path=Path(_env("DB_PATH", "data/warehouse/gocase.duckdb")),
+            db_path=Path(_env("DB_PATH", "data/warehouse/smartphone_price_intelligence.duckdb")),
             audit_path=Path(_env("AUDIT_PATH", "data/audit/collection_runs.jsonl")),
             report_path=Path(_env("REPORT_PATH", "reports/pipeline_execution_report.md")),
             min_rows=int(_env("MIN_ROWS", "100")),
@@ -68,7 +68,7 @@ class PipelineSettings:
             stream_backend=_env("STREAM_BACKEND", "kafka"),
             kafka_bootstrap_servers=_env("KAFKA_BOOTSTRAP_SERVERS", "localhost:9094"),
             kafka_topic=_env("KAFKA_TOPIC", "product-listing-events"),
-            kafka_consumer_group=_env("KAFKA_CONSUMER_GROUP", "gocase-duckdb-loader"),
+            kafka_consumer_group=_env("KAFKA_CONSUMER_GROUP", "smartphone-price-intelligence-duckdb-loader"),
             kafka_idle_timeout_seconds=float(_env("KAFKA_IDLE_TIMEOUT_SECONDS", "5")),
         )
 

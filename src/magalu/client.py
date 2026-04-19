@@ -25,7 +25,7 @@ class MagaluClient:
         *,
         session: Optional[requests.Session] = None,
         timeout_seconds: float = 20.0,
-        user_agent: str = "gocase-eng-dados-magalu-collector/1.0",
+        user_agent: str = "smartphone-price-intelligence-magalu-collector/1.0",
     ) -> None:
         self._session = session or requests.Session()
         self._timeout_seconds = timeout_seconds
@@ -49,4 +49,3 @@ class MagaluClient:
             raise MagaluClientError(f"Falha ao buscar Magalu url={url}: {e}") from e
 
         return MagaluSearchPage(query=query, page=page, url=url, html=resp.text)
-

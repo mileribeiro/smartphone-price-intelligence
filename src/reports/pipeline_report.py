@@ -223,7 +223,7 @@ def write_report(*, report: dict[str, Any], output_path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Gera relatório executivo e técnico do pipeline.")
     parser.add_argument("--bronze", default="data/bronze/magalu_smartphones.jsonl", help="Arquivo bronze JSONL.")
-    parser.add_argument("--db", default="data/warehouse/gocase.duckdb", help="Banco analítico DuckDB.")
+    parser.add_argument("--db", default="data/warehouse/smartphone_price_intelligence.duckdb", help="Banco analítico DuckDB.")
     parser.add_argument("--audit", default="data/audit/collection_runs.jsonl", help="Arquivo JSONL de auditoria.")
     parser.add_argument("--output", default="reports/pipeline_execution_report.md", help="Relatório Markdown.")
     parser.add_argument("--min-rows", type=int, default=100, help="Volume mínimo esperado.")

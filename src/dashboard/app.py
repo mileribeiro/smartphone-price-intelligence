@@ -13,7 +13,7 @@ import streamlit as st
 from src.dashboard.queries import DashboardDataError, load_dashboard_data
 
 
-DEFAULT_DB_PATH = "data/warehouse/gocase.duckdb"
+DEFAULT_DB_PATH = "data/warehouse/smartphone_price_intelligence.duckdb"
 LOCAL_TIMEZONE = ZoneInfo(os.environ.get("TZ", "America/Fortaleza"))
 COLUMN_LABELS = {
     "item_id": "ID do produto",

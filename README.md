@@ -2,10 +2,6 @@
 
 Uma startup de e-commerce focada em acessórios para smartphones precisa desenvolver inteligência competitiva para apoiar suas estratégias de precificação. Para isso, o time de dados deve responder a dez perguntas de negócio relacionadas ao mercado de smartphones no Brasil, abordando temas como distribuição de preços, comportamento do frete grátis, ranking de marcas, correlação entre descontos e volume de vendas, além da evolução dos preços ao longo do tempo.
 
-## Nota Sobre Uso De IA No Desenvolvimento
-
-O arquivo [PROMPT.md](PROMPT.md) registra o prompt inicial usado para orientar o desenvolvimento assistido por IA deste case. Nele, os passos de execução foram definidos previamente e as ferramentas de IA deveriam seguir essas instruções, validando com a autora antes de alterar decisões de escopo ou arquitetura. Durante o desenvolvimento, foram usadas as ferramentas Codex e Cursor como apoio para implementação, documentação, revisão e ajustes, mantendo o controle decisório com a autora do projeto.
-
 ## Fonte De Dados Escolhida
 
 A fonte oficial escolhida foi o Magazine Luiza, usando páginas públicas de busca como:
@@ -166,6 +162,46 @@ Para pausar somente novas coletas, pause a DAG no Airflow ou rode:
 docker compose exec airflow airflow dags pause price_monitoring_smartphones
 ```
 
+## Estrutura Do Projeto
+
+```text
+├── dags/
+│   └── price_monitoring_smartphones.py  # DAG Airflow que orquestra coleta, Kafka, DuckDB, marts e relatório
+├── data/
+│   ├── audit/
+│   │   └── collection_runs.jsonl        # Auditoria das execuções da coleta
+│   ├── bronze/
+│   │   └── magalu_smartphones.jsonl     # Eventos brutos auditáveis em JSONL
+│   ├── queue/
+│   │   └── product_listing_events.jsonl # Fila local usada no fallback sem Kafka
+│   └── warehouse/
+│       └── smartphone_price_intelligence.duckdb # Warehouse analítico em DuckDB
+├── docs/
+│   └── assets/                          # Imagens e GIFs usados no README
+├── reports/
+│   └── pipeline_execution_report.md     # Relatório Markdown gerado pela DAG
+├── src/
+│   ├── audit/                           # Registro das execuções da coleta
+│   ├── common/                          # Modelos, hashing, logs e datas
+│   ├── dashboard/                       # Consultas DuckDB e app Streamlit
+│   ├── ingestion/                       # Publicação e consumo Kafka/fila local
+│   ├── magalu/                          # Cliente, parser e serviço coletor Magalu
+│   ├── orchestration/                   # Funções Python chamadas pela DAG e CLI
+│   ├── pipeline/                        # Entrada local para carga Bronze no DuckDB
+│   ├── quality/                         # Validações Bronze e Warehouse
+│   ├── reports/                         # Geração do relatório executivo/técnico
+│   └── warehouse/                       # Criação de tabelas, staging, fato, dimensões e marts
+├── tests/                               # Suíte de testes automatizados
+├── .env                                 # Variáveis de ambiente com defaults não sensíveis
+├── .gitignore                           # Arquivos locais ignorados
+├── docker-compose.yml                   # Sobe Kafka, Airflow e Streamlit
+├── Dockerfile                           # Imagem Python usada pelos serviços
+├── Makefile                             # Atalhos para execução local
+├── PROMPT.md                            # Prompt inicial usado no desenvolvimento assistido por IA
+├── README.md                            # Documentação principal do projeto
+└── requirements.txt                     # Dependências Python
+```
+
 ## Execução Local Para Desenvolvimento
 
 ```bash
@@ -209,7 +245,7 @@ As variáveis ficam no arquivo `.env` na raiz do projeto. Ele já concentra os d
 
 - **Magalu como fonte**: fonte brasileira, pública e aderente ao domínio de smartphones.
 - **Kafka como contrato de evento**: cada produto coletado vira um evento publicado em `product-listing-events`.
-- **DuckDB como arquivo**: o warehouse fica em `data/warehouse/gocase.duckdb`, sem serviço de banco separado.
+- **DuckDB como arquivo**: o warehouse fica em `data/warehouse/smartphone_price_intelligence.duckdb`, sem serviço de banco separado.
 - **JSONL auditável**: além do DuckDB, a coleta é registrada em arquivo para inspeção e reprocessamento.
 - **Airflow real via Docker Compose**: a DAG separa coleta, validação, consumo, staging, marts, qualidade e relatório.
 - **Streamlit separado do Airflow**: o dashboard roda em container próprio e lê o DuckDB em modo somente leitura.
@@ -289,7 +325,7 @@ O cache do dashboard usa TTL curto de 60 segundos. Isso reduz leituras repetidas
 
 ## Insights Das 10 Perguntas
 
-Os números abaixo refletem o snapshot atual do arquivo `data/warehouse/gocase.duckdb`. Como a DAG roda de hora em hora, os valores podem mudar após novas coletas.
+Os números abaixo refletem o snapshot atual do arquivo `data/warehouse/smartphone_price_intelligence.duckdb`. Como a DAG roda de hora em hora, os valores podem mudar após novas coletas.
 
 1. **Qual é o preço médio, mínimo e máximo de smartphones na plataforma?**
 
@@ -350,3 +386,7 @@ Os números abaixo refletem o snapshot atual do arquivo `data/warehouse/gocase.d
     Pelo score `sum(sales_volume_proxy) / avg(price)`, `magazineluiza` lidera com 66,62. Depois aparecem `shopnext` com 15,63, `carrefouroficial` com 12,92 e `oficialamericanas` com 11,29. O score favorece vendedores com alto volume proxy e preço médio mais baixo.
 
     ![Pergunta 10 no dashboard](docs/assets/pergunta_10_dashboard.png)
+
+## Nota Sobre Uso De IA No Desenvolvimento
+
+O arquivo [PROMPT.md](PROMPT.md) registra o prompt inicial usado para orientar o desenvolvimento assistido por IA deste case. Nele, os passos de execução foram definidos previamente e as ferramentas de IA deveriam seguir essas instruções, validando com a autora antes de alterar decisões de escopo ou arquitetura. Durante o desenvolvimento, foram usadas as ferramentas Codex e Cursor como apoio para implementação, documentação, revisão e ajustes, mantendo o controle decisório com a autora do projeto.

@@ -1,3 +1,5 @@
+name: smartphone-price-intelligence
+
 services:
   kafka:
     image: apache/kafka:3.7.0
@@ -67,7 +69,7 @@ services:
       - "8501:8501"
     environment:
       PYTHONPATH: /app
-      DB_PATH: /app/data/warehouse/gocase.duckdb
+      DB_PATH: /app/data/warehouse/smartphone_price_intelligence.duckdb
     volumes:
       - ./src:/app/src
       - ./data:/app/data

@@ -136,7 +136,7 @@ def validate_warehouse(*, db_path: Path) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Valida as tabelas finais do warehouse DuckDB.")
-    parser.add_argument("--db", default="data/warehouse/gocase.duckdb", help="Banco analítico DuckDB.")
+    parser.add_argument("--db", default="data/warehouse/smartphone_price_intelligence.duckdb", help="Banco analítico DuckDB.")
     args = parser.parse_args()
 
     result = validate_warehouse(db_path=Path(args.db))

@@ -11,7 +11,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Pipeline local bronze -> queue -> DuckDB -> marts.")
     parser.add_argument("--bronze", required=True, help="Arquivo JSONL bronze de entrada.")
     parser.add_argument("--queue", default="data/queue/product_listing_events.jsonl", help="Fila local JSONL.")
-    parser.add_argument("--db", default="data/warehouse/gocase.duckdb", help="Banco analítico DuckDB de saída.")
+    parser.add_argument("--db", default="data/warehouse/smartphone_price_intelligence.duckdb", help="Banco analítico DuckDB de saída.")
     return parser
 
 
