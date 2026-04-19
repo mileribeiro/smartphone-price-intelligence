@@ -63,9 +63,7 @@ senha: admin
 
 Depois que o Compose subir, a DAG `price_monitoring_smartphones` fica responsável por rodar a coleta e as transformações a cada hora.
 
-<video src="docs/assets/airflow_dag_execucao.mov" controls width="100%"></video>
-
-Se o seu visualizador Markdown não renderizar vídeo, abra o arquivo diretamente: [airflow_dag_execucao.mov](docs/assets/airflow_dag_execucao.mov).
+![Execução da DAG no Airflow](docs/assets/airflow_dag_execucao.gif)
 
 Para subir somente o dashboard:
 
