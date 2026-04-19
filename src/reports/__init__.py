@@ -1,0 +1,2 @@
+"""Report generation entry points."""
+

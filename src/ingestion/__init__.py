@@ -1,0 +1,2 @@
+"""Ingestão local do pipeline."""
+

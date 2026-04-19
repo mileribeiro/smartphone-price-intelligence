@@ -1,0 +1,83 @@
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    ports:
+      - "9094:9094"
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  airflow:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__DAGS_FOLDER: /app/dags
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      PYTHONPATH: /app
+    volumes:
+      - ./dags:/app/dags
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./reports:/app/reports
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set -e
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com \
+          --password admin || true
+        airflow scheduler &
+        exec airflow webserver --port 8080
+
+  streamlit:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - airflow
+    ports:
+      - "8501:8501"
+    environment:
+      PYTHONPATH: /app
+      DB_PATH: /app/data/warehouse/gocase.duckdb
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        streamlit run src/dashboard/app.py \
+          --server.address=0.0.0.0 \
+          --server.port=8501
+
+volumes:
+  kafka_data:
