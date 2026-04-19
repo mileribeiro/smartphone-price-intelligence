@@ -27,11 +27,94 @@ Limitações importantes da fonte:
 
 ## Visão Macro Da Arquitetura
 
-![Visão macro da arquitetura](docs/assets/visao_macro_arquitetura.png)
+```mermaid
+graph TD
+    %% Estilos
+    classDef start fill:#a5d6a7,stroke:#333,color:#000,font-weight:bold;
+    classDef process fill:#90caf9,stroke:#333,color:#000,stroke-width:1px;
+    classDef decision fill:#fff4dd,stroke:#d4a017,color:#000,stroke-width:2px;
+    classDef error fill:#ffcdd2,stroke:#f66,color:#000,stroke-width:1px;
+    classDef storage fill:#eeeeee,stroke:#333,color:#000,stroke-width:2px;
+    classDef final fill:#fbb,stroke:#333,color:#000,font-weight:bold;
+
+    Start((Início)):::start --> Airflow[Airflow executa DAG horária]:::process
+    Airflow --> Collector[Coletar produtos no Magalu]:::process
+    Collector --> Collected{Coleta<br/>válida?}:::decision
+
+    Collected -- Não --> CollectError[Log: falha na coleta]:::error
+    CollectError --> EndFail((Fim com erro)):::final
+
+    Collected -- Sim --> Kafka[(Kafka<br/>product-listing-events)]:::storage
+    Collected -- Sim --> Jsonl[(Bronze JSONL<br/>auditável)]:::storage
+
+    Jsonl --> ValidateJsonl[Validar Bronze JSONL]:::process
+    Kafka --> Consumer[Consumir eventos Kafka]:::process
+
+    ValidateJsonl --> DuckBronze[(DuckDB Bronze)]:::storage
+    Consumer --> DuckBronze
+
+    DuckBronze --> Staging[Limpar e padronizar Staging]:::process
+    Staging --> Model[Construir fato e dimensões]:::process
+    Model --> Marts[Gerar marts analíticos]:::process
+
+    Marts --> Quality{Checks de<br/>qualidade OK?}:::decision
+    Quality -- Não --> QualityError[Log: inconsistência no warehouse]:::error
+    QualityError --> EndFail
+
+    Quality -- Sim --> Report[(Relatório Markdown)]:::storage
+    Quality -- Sim --> Dashboard[Dashboard Streamlit]:::process
+
+    Report --> End((Fim do processo)):::final
+    Dashboard --> End
+```
 
 ## Fluxo De Extração Do Coletor
 
-![Fluxo de extração do coletor Magalu](docs/assets/fluxo_coletor_magalu.png)
+```mermaid
+graph TD
+    %% Estilos
+    classDef start fill:#a5d6a7,stroke:#333,color:#000,font-weight:bold;
+    classDef process fill:#90caf9,stroke:#333,color:#000,stroke-width:1px;
+    classDef decision fill:#fff4dd,stroke:#d4a017,color:#000,stroke-width:2px;
+    classDef error fill:#ffcdd2,stroke:#f66,color:#000,stroke-width:1px;
+    classDef storage fill:#eeeeee,stroke:#333,color:#000,stroke-width:2px;
+    classDef final fill:#fbb,stroke:#333,color:#000,font-weight:bold;
+
+    Start((Início)):::start --> Queries[Carregar termos em QUERIES]:::process
+    Queries --> Url[Monta URL de busca Magalu]:::process
+    Url --> Html[Baixa HTML da página]:::process
+
+    Html --> PageOk{Página<br/>carregou?}:::decision
+    PageOk -- Não --> PageError[Log: falha na página]:::error
+    PageError --> HasNext
+
+    PageOk -- Sim --> Cards[Identifica cards de produto]:::process
+    Cards --> Pending{Existem cards<br/>pendentes?}:::decision
+
+    Pending -- Sim --> Pick[Seleciona próximo card]:::process
+    Pick --> Extract[Extrai título, preço, seller,<br/>marca, rating e reviews]:::process
+    Extract --> Normalize[Normaliza ProductListingEvent]:::process
+    Normalize --> Valid{Dados<br/>válidos?}:::decision
+
+    Valid -- Não --> ProductError[Log: pula produto inválido]:::error
+    ProductError --> Pending
+
+    Valid -- Sim --> Hash[Calcula payload_hash]:::process
+    Hash --> Exists{Evento já existe<br/>no JSONL?}:::decision
+
+    Exists -- Sim --> Duplicate[Ignora duplicado]:::error
+    Duplicate --> Pending
+
+    Exists -- Não --> Persist[(Grava JSONL e<br/>publica no Kafka)]:::storage
+    Persist --> Pending
+
+    Pending -- Não --> HasNext{Existe próxima<br/>página ou query?}:::decision
+    HasNext -- Sim --> NextUrl[Prepara próxima URL]:::process
+    NextUrl --> Html
+
+    HasNext -- Não --> Audit[(Registra auditoria<br/>da coleta)]:::storage
+    Audit --> End((Fim do processo)):::final
+```
 
 Cada produto válido vira um `ProductListingEvent`. O `payload_hash` é a chave de idempotência usada no JSONL, no Kafka e na Bronze do DuckDB.
 
